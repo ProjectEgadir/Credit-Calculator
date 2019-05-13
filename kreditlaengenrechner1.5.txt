@@ -1,0 +1,271 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+#3,6% Zinsen (hoechstens 0,5 Promille mehr) und kredit=159000 scheint fuer dieses Programm die Obergrenze zu sein
+#danach dauert es zu lange um alles auszurechnen => nicht scalable fuer Berechnungen im
+#Business-InvestmentBereich wo es die Zahlen viel groesser werden koennen
+#btw Hoechster Zins der EZB Oktober 2000 bei 4,75% und danach Juli 2008 bei 4,25%
+
+
+zins = 1.036
+kredit0 = 159000
+data = [] #Jaehrliche Stand des Kredits (was noch abzubezahlen ist). "Neue Kreditrechnung" ab negativem Datenwert.
+kreditende = [0] #hier werden die Dauer zum Abbezahlen der Kredite eingespeichert
+#n = input("Anzahl Jahre der Verkuerzung: ")
+zinsensumme = 0
+def calc(rate):#monatliche Rate
+  i=0
+  zs = 0
+  rate = rate*12
+  kredit = kredit0*zins
+  while(kredit > 0):
+    data.append(kredit)
+    zs=zs+(zins-1)*kredit
+    kredit = zins*kredit - rate
+    i = i+1
+    if kredit<0:
+      data.append(kredit)
+      data.append(rate/12)
+      #print(str(i)+"\t"+str(kredit))
+  if i!=kreditende[len(kreditende)-1]:
+    kreditende.append(i)
+  global  zinsensumme
+  zinsensumme = int(zs)
+
+
+def opt(start,end): #Start=Minimalrate. End=Maximalrate
+  step = 100
+  result = []
+  tmp2 = 0 #Zaehlvariable von null bis (start-end)/step+1.......+1 weil der nullte Step auch mitgerechnet wird
+  for i in range(start,end,step):
+    tmp = len(kreditende)
+    calc(i)
+    if tmp!=len(kreditende):#wenn bei calc eine Rate hinzugefuegt wurde, weil sie die Dauer der Kreditabbezhalung reduziert, sind tmp und len(kreditende) versch und Ergebnis kann geprintet werden
+      #print(str(kreditende[len(kreditende)-1])+"\t"+str(i)+"\t"+str(zinsensumme))
+      result.append([kreditende[len(kreditende)-1],i,zinsensumme])
+      tmp2=tmp2+1
+      #print(str(kreditende[len(kreditende)-1])+" Rate: "+str(i)+" Zinsensumme: "+str(zinsensumme))
+
+
+#AUSGABE: 3 Spalten mit Jahren, Monatsrate und Zinsensumme
+####!!!!Tabelle:Jahre/Monatsrate/Zinsensumme  print("Zinsen: "+str((zins-1)*100)+" %")
+####!!!!Tabelle:Jahre/Monatsrate/Zinsensumme  print("Kredit: "+str(kredit0)+" Euro")
+####!!!!Tabelle:Jahre/Monatsrate/Zinsensumme  print('{:>16}'.format('Jahre')+'{:>17}'.format('Monatsrate')+'{:>17}'.format('Zinsensumme'))#komischerweise muessen nach den Jahren die Abstaende um eins erhoeht werden damit die Formatierung passt.
+
+
+
+  mark = [1,4,7,10]#damit kann man bstimmte Werte markieren bspw was minimal moeglich zu finanzieren ist und was maximal noetig zu finanzieren ist. 
+  #{:>n} n ist die breite eines chars also eines Zeichens
+  tester = 0
+  text = "***"
+  n1=16
+  for line in result:
+    if tester in mark:
+      somerandomvariable = 0
+####!!!!Tabelle:Jahre/Monatsrate/Zinsensumme      print(text+'{:>{n}} {:>16} {:>16}'.format(*line,n=n1-len(text)))#{:>{n}} dieses n muss extra von der Funktion format(*line, n) aufgerufen werden. an dieser Stelle kann man n auch modifizieren.
+    else:
+      somerandomvariable = 0
+####!!!!Tabelle:Jahre/Monatsrate/Zinsensumme      print('{:>16} {:>16} {:>16}'.format(*line))
+    tester=tester+1
+
+
+startrate = 500
+endrate = 3000
+opt(startrate,endrate)
+
+
+
+
+#detaillierte Ratenberechnung (pro Jahr) fuer alle verschiedenen Monatsraten
+
+
+years = []
+def detail(boolean):
+	if boolean == True:
+		print("500\n")
+	i=0
+	x = 0
+	while(i<len(data)):
+		if data[i]>0:
+			if boolean == True:
+				print(str(i)+"\t\t"+str(data[i]))
+			i=i+1
+			x=x+1
+		else:
+			restrate = data[i+1]*12+data[i] 
+			if boolean == True:
+				print("\n\nNeue Rate: "+str(data[i+1]))
+				print("Restrate : "+str(restrate))
+				print("Anzahl Restmonate : "+str(restrate/data[i+1]))
+			i=i+2
+			global years
+			years.append(x)
+			x = 0
+			#print(str(i)+"\t\t"+str(data[i]))
+
+detail(False)
+
+
+
+
+yearsarray = []				#array mit allen x-Werten fuer den Plot
+for i in range(len(years)):
+	yearsarray.append([])
+	tmp = list(np.arange(1,years[i]+1,1))
+	yearsarray[i]= tmp
+#print(yearsarray)
+
+
+restkreditarray = [[]]			#array mit allen y-Werten fuer den Plot
+n = 0
+#print("len years "+str(len(years)))
+print("#############################")
+
+#start = 0
+#ende = years[0]
+#for i in range(len(years)):
+#	print("NNNNNNNNNNNNNNNN   "+str(n))
+#	restkreditarray.append([])
+#	for k in range(start,ende):				###NOTE: WHILE IST BESSER
+#		restkreditarray[i].append(data[k])
+#		print("data["+str(k)+"] = "+str(data[k]))
+#	print("start: "+str(start))
+#	print("ende: "+str(ende))
+#	start = ende
+#	try:
+#		ende = ende + years[i+1]
+#	except:
+#		print()
+#
+#	n = n+years[i]
+#	n = n+2 		#negativer Restbetrag weg UND monatliche Rate weg (aus data[])
+
+
+
+n = 0			#n runs through data. 
+				#n will be incremented when next rate (in data) will be used/saved into restkreditarray
+k = 0			#k runs through restkreditarray. 
+				#k will be incremented when next kredit is calculated
+boolean = True
+restmonatarray = []
+while(boolean):
+#	print(n)
+#	print(data[n])
+	if n > len(data)-1:	
+		boolean = False
+		break
+	if data[n] > 0:
+		restkreditarray[k].append(data[n])	#das letzte element in restkreditarray ist schon die monatliche Rate fuer restkreditarray btw 
+		#print(data[n])
+		n = n +1
+	else:
+		k = k + 1
+		#print("Restbetrag: "+str(data[n]))
+		#print("Rate: "+str(data[n+1])+"\n")
+		restkreditarray.append([])
+		#restkreditarray[k].append(data[n])
+		#restkreditarray[k].append(data[n+1])
+		n = n + 2 
+
+			#n = n + 2	#hier kommt spaeter das speichern des restmonats und der monatlichen Rate hin
+		
+
+
+
+#####DEBUG: if x and y are not matching = when restkredit and yearsarray dont have the same amount of elemtents in them
+#for i in range(0,len(restkreditarray)-1):
+#	print("\n\nNEUER KREDIT:")
+#	print("len restkredit: "+str(len(restkreditarray[i])))
+#	print("len yearsarray: "+ str(len(yearsarray[i])))
+	#for k in range(0,len(restkreditarray[i])):
+		#print(np.round(restkreditarray[i][k]))	
+
+
+
+
+fig = plt.figure()
+ax = plt.subplot(111)
+
+
+
+# Shrink current axis by 40%
+box = ax.get_position()
+ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+ax.legend(loc='center left', bbox_to_anchor=(1,0))
+
+
+for i in range(0,len(restkreditarray)-1):
+	plt.yticks(np.arange(0,kredit0*1.2,20000))
+	plt.xticks(np.arange(0,45,10))
+	plt.xlabel("Years since day 0")
+	plt.ylabel("Remaining dept")
+	step = 100
+	case = []
+	for n in range(startrate,endrate,step):
+		case.append(n)
+	plt.legend(case,loc="right",bbox_to_anchor=(1.25,0.5),fontsize = "xx-small")#remember to look at the "step"-variable in the "opt"-function
+	plt.title("Interestrate: "+str(zins)+"\nCredit: "+str(kredit0))
+	plt.plot(yearsarray[i],restkreditarray[i],'-')
+
+
+#####DEBUG: Check yearsarray + restkreditarray
+for i in range(0,len(yearsarray)):
+	print("\nyearsarray: "+str(yearsarray[i]))
+#for i in range(0,len(restkreditarray)):
+#	print("\n\n\n restkreditarray: " + str(restkreditarray[i]))
+
+
+
+
+
+
+
+
+
+
+
+something = True
+n = 0
+#while(something):
+#	if n > len(data)-1:	
+#		boolean = False
+#		break
+#	print(data[n])
+#	n = n + 1
+
+
+while(something):
+	if n > len(data)-1:	
+		something = False
+		break
+	if data[n]>0:
+		print(data[n])
+
+		n = n + 1
+	else:
+		print("Restliche Monate: "+str(data[n-1]*1.02/data[n+1]))
+		print("Rate: "+str(data[n+1])+"\n")
+		n = n + 2
+
+
+
+
+
+
+
+
+
+
+
+#print(len(yearsarray))
+#print(len(restkreditarray))
+
+
+#for i in range(0,len(data)):
+#	print("data["+str(i)+"]"+str(data[i]))
+
+
+plt.show()
+
+########NEXT TASK: Buttons und Textfelder hinzufuegen um Plot per interface zu veraendern (refreshen!!!)
